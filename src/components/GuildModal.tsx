@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Quest, Title, Talisman, EquipmentState, EquipSlot } from '../types/game';
 import { generateGachaTalisman } from '../data/guild';
 import { RARITY_CONFIG } from '../data/items';
+import { JapaneseEquipIcon } from './JapaneseEquipIcon';
 
 interface Props {
   gold: number;
@@ -33,91 +34,94 @@ export const GuildModal: React.FC<Props> = ({
   onDrawTalisman,
   onClose
 }) => {
-  const [tab, setTab] = useState<'guild' | 'forge' | 'talisman' | 'titles'>('guild');
+  const [tab, setTab] = useState<'bounty' | 'forge' | 'talisman' | 'titles'>('bounty');
 
-  // 全装備の修理費用計算
   const brokenItems = Object.values(equipment).filter(i => i && i.durability < i.maxDurability);
-  const totalRepairCost = brokenItems.reduce((acc, cur) => acc + (cur!.maxDurability - cur!.durability) * 2, 0);
+// 修正後:
+  const totalRepairCost = brokenItems.reduce((acc, cur) => {
+    const rKey = (cur?.rarity || '一般') as keyof typeof RARITY_CONFIG;
+    const rate = RARITY_CONFIG[rKey]?.repairMult ?? 1;
+    return acc + (cur!.maxDurability - cur!.durability) * rate * 3;
+  }, 0);
 
   const handleGacha = () => {
     const cost = 250;
     if (gold < cost) return;
-    const tal = generateGachaTalisman(); // 引数なしで呼ぶ
+    const tal = generateGachaTalisman();
     onDrawTalisman(tal, cost);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/85 backdrop-blur-md">
-      <div className="w-full max-w-md h-[88vh] bg-stone-900 border border-stone-700 rounded-2xl flex flex-col justify-between shadow-2xl text-stone-200 overflow-hidden">
-        {/* ヘッダー */}
-        <div className="p-3 border-b border-stone-800 bg-stone-950/80 flex justify-between items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-md font-serif">
+      <div className="w-full max-w-md h-[88vh] bg-stone-900 border-2 border-stone-700 rounded-2xl flex flex-col justify-between shadow-2xl text-stone-200 overflow-hidden">
+        {/* 表題部 */}
+        <div className="p-3 border-b border-stone-800 bg-stone-950 flex justify-between items-center">
           <div>
-            <h3 className="font-serif font-black text-amber-400 tracking-wider text-sm">
-              HAVEN GUILD & FORGE
+            <h3 className="font-bold text-amber-400 tracking-wider text-sm">
+              常夜の宿場・鍛冶処
             </h3>
-            <p className="text-[10px] text-stone-400">Receptionist Elysia welcomes you.</p>
+            <p className="text-[10px] text-stone-400">社守の巫女・静音と刀鍛冶が逗留しています。</p>
           </div>
           <button onClick={onClose} className="p-1 hover:text-white text-stone-400 text-lg">✕</button>
         </div>
 
-        {/* タブナビゲーション */}
-        <div className="grid grid-cols-4 border-b border-stone-800 text-xs font-mono bg-stone-950">
+        {/* 和風タブナビゲーション */}
+        <div className="grid grid-cols-4 border-b border-stone-800 text-xs bg-stone-950 font-bold">
           <button
-            onClick={() => setTab('guild')}
-            className={`py-2 text-center border-b-2 ${tab === 'guild' ? 'border-amber-400 text-amber-300 font-bold' : 'border-transparent text-stone-400'}`}
+            onClick={() => setTab('bounty')}
+            className={`py-2 text-center border-b-2 ${tab === 'bounty' ? 'border-amber-400 text-amber-300' : 'border-transparent text-stone-500'}`}
           >
-            Quests
+            討伐手配書
           </button>
           <button
             onClick={() => setTab('forge')}
-            className={`py-2 text-center border-b-2 ${tab === 'forge' ? 'border-amber-400 text-amber-300 font-bold' : 'border-transparent text-stone-400'}`}
+            className={`py-2 text-center border-b-2 ${tab === 'forge' ? 'border-amber-400 text-amber-300' : 'border-transparent text-stone-500'}`}
           >
-            Forge
+            銘刀鍛冶
           </button>
           <button
             onClick={() => setTab('talisman')}
-            className={`py-2 text-center border-b-2 ${tab === 'talisman' ? 'border-amber-400 text-amber-300 font-bold' : 'border-transparent text-stone-400'}`}
+            className={`py-2 text-center border-b-2 ${tab === 'talisman' ? 'border-amber-400 text-amber-300' : 'border-transparent text-stone-500'}`}
           >
-            Talismans
+            深淵護石
           </button>
           <button
             onClick={() => setTab('titles')}
-            className={`py-2 text-center border-b-2 ${tab === 'titles' ? 'border-amber-400 text-amber-300 font-bold' : 'border-transparent text-stone-400'}`}
+            className={`py-2 text-center border-b-2 ${tab === 'titles' ? 'border-amber-400 text-amber-300' : 'border-transparent text-stone-500'}`}
           >
-            Titles
+            武名称号
           </button>
         </div>
 
-        {/* コンテンツエリア */}
+        {/* 本文エリア */}
         <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
-          {tab === 'guild' && (
+          {tab === 'bounty' && (
             <div>
-              {/* 受付嬢エリスのダイアログ */}
-              <div className="flex items-start space-x-3 bg-stone-950/70 p-3 rounded-xl border border-stone-800 mb-3">
+              {/* 静音の台詞枠 */}
+              <div className="flex items-start space-x-3 bg-stone-950/80 p-3 rounded-xl border border-stone-800 mb-3">
                 <div className="w-10 h-10 rounded-full bg-amber-950/80 border border-amber-600 flex items-center justify-center text-xl shrink-0">
-                  👩‍💼
+                  ⛩️
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-amber-300 font-serif">Elysia (Guild Receptionist)</div>
+                  <div className="text-[11px] font-bold text-amber-300">巫女・静音</div>
                   <p className="text-[11px] text-stone-300 mt-0.5 leading-relaxed">
-                    "Welcome back, Delver. The Abyss grows more restless each day. Fulfill our bounties and I will ensure you are well rewarded."
+                    「流浪人様、深層より這い出る妖異の討伐手配書が届いております。達成なされば相応の両目を差し上げましょう。」
                   </p>
                 </div>
               </div>
 
               {/* クエスト一覧 */}
               <div className="space-y-2">
-                <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Active Bounties</div>
                 {quests.map(q => (
-                  <div key={q.id} className="p-2.5 rounded-xl border border-stone-800 bg-stone-950/50 flex justify-between items-center">
+                  <div key={q.id} className="p-2.5 rounded-xl border border-stone-800 bg-stone-950/60 flex justify-between items-center">
                     <div>
                       <div className="font-bold text-stone-200">{q.title}</div>
                       <div className="text-[10px] text-stone-400 font-mono mt-0.5">
-                        Progress: {q.currentCount}/{q.targetCount} • Reward: <span className="text-amber-400">{q.rewardGold} G</span>
+                        進捗: {q.currentCount}/{q.targetCount} • 褒美: <span className="text-amber-400">{q.rewardGold} 両</span>
                       </div>
                     </div>
                     {q.isClaimed ? (
-                      <span className="text-[10px] text-stone-500 font-bold px-2 py-1 bg-stone-900 rounded">Claimed</span>
+                      <span className="text-[10px] text-stone-500 font-bold px-2 py-1 bg-stone-900 rounded">受領済</span>
                     ) : (
                       <button
                         onClick={() => onClaimQuest(q.id)}
@@ -128,7 +132,7 @@ export const GuildModal: React.FC<Props> = ({
                             : 'bg-stone-800 text-stone-500 cursor-not-allowed'
                         }`}
                       >
-                        Claim
+                        褒美を受取る
                       </button>
                     )}
                   </div>
@@ -139,49 +143,52 @@ export const GuildModal: React.FC<Props> = ({
 
           {tab === 'forge' && (
             <div className="space-y-3">
-              {/* 全修理ボタン */}
-              <div className="p-3 bg-stone-950/70 border border-stone-800 rounded-xl flex justify-between items-center">
+              {/* 全武具修理 */}
+              <div className="p-3 bg-stone-950/80 border border-stone-800 rounded-xl flex justify-between items-center">
                 <div>
-                  <div className="font-bold text-stone-200">Blacksmith Repair Service</div>
-                  <div className="text-[10px] text-stone-400">Restore all equipped relics to 100% condition.</div>
+                  <div className="font-bold text-stone-200">研ぎ師の武具手入れ</div>
+                  <div className="text-[10px] text-stone-400">身に纏う全武具の刃こぼれを研ぎ直します。</div>
                 </div>
                 <button
                   onClick={() => onRepairAll(totalRepairCost)}
                   disabled={totalRepairCost === 0 || gold < totalRepairCost}
                   className={`px-3 py-1.5 rounded font-bold text-xs ${
                     totalRepairCost > 0 && gold >= totalRepairCost
-                      ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                      ? 'bg-amber-600 hover:bg-amber-500 text-stone-950 shadow-md'
                       : 'bg-stone-800 text-stone-500 cursor-not-allowed'
                   }`}
                 >
-                  Repair All ({totalRepairCost} G)
+                  研ぎ直す ({totalRepairCost} 両)
                 </button>
               </div>
 
-              {/* 装備強化セクション */}
-              <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Enhance Equipment</div>
+              {/* 武具鍛錬 */}
+              <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">武具鍛錬</div>
               <div className="space-y-2">
                 {(Object.entries(equipment) as [EquipSlot, EquipmentState[EquipSlot]][]).map(([slot, item]) => {
                   if (!item) return null;
-                  const upgradeCost = (item.upgradeLevel + 1) * 75;
+                  const upgradeCost = (item.upgradeLevel + 1) * 85;
                   return (
-                    <div key={slot} className="p-2.5 rounded-xl border border-stone-800 bg-stone-950/50 flex justify-between items-center">
-                      <div>
-                        <div className="font-bold text-stone-200">
-                          {item.icon} {item.name} <span className="text-amber-400">+{item.upgradeLevel}</span>
-                        </div>
-                        <div className="text-[10px] text-stone-400 font-mono">
-                          Durability: {item.durability}/{item.maxDurability} • Next: +15% Stats
+                    <div key={slot} className="p-2.5 rounded-xl border border-stone-800 bg-stone-950/60 flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        <JapaneseEquipIcon slot={slot} rarity={item.rarity} size="sm" />
+                        <div>
+                          <div className="font-bold text-stone-200">
+                            {item.name} <span className="text-amber-400">+{item.upgradeLevel}</span>
+                          </div>
+                          <div className="text-[10px] text-stone-400 font-mono">
+                            耐久: {item.durability}/{item.maxDurability} • 次回性能: +15%
+                          </div>
                         </div>
                       </div>
                       <button
                         onClick={() => onUpgradeItem(slot, upgradeCost)}
                         disabled={gold < upgradeCost}
                         className={`px-2.5 py-1 rounded text-[11px] font-bold ${
-                          gold >= upgradeCost ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                          gold >= upgradeCost ? 'bg-amber-600 hover:bg-amber-500 text-stone-950' : 'bg-stone-800 text-stone-500 cursor-not-allowed'
                         }`}
                       >
-                        Upgrade ({upgradeCost} G)
+                        鍛錬 ({upgradeCost} 両)
                       </button>
                     </div>
                   );
@@ -192,45 +199,43 @@ export const GuildModal: React.FC<Props> = ({
 
           {tab === 'talisman' && (
             <div className="space-y-3">
-              {/* ガチャ召喚バナー */}
-              <div className="p-3 bg-gradient-to-br from-purple-950/60 to-stone-950 border border-purple-800/60 rounded-xl text-center">
-                <div className="font-serif font-black text-purple-300 text-sm mb-1">
-                  ABYSSAL TALISMAN TRANSMUTATION
+              <div className="p-3 bg-gradient-to-br from-indigo-950/70 to-stone-950 border border-indigo-700/60 rounded-xl text-center">
+                <div className="font-black text-amber-300 text-sm mb-1">
+                  深淵の霊核鑑定
                 </div>
-                <p className="text-[10px] text-stone-400 mb-2">
-                  Transmute dark essence into unique Talismans with game-changing passives.
+                <p className="text-[10px] text-stone-300 mb-2">
+                  常夜の穢れから極上の効果を秘めた護石を錬成します。
                 </p>
                 <button
                   onClick={handleGacha}
                   disabled={gold < 250}
                   className={`w-full py-2 rounded-lg font-bold text-xs transition-all ${
                     gold >= 250
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/50'
+                      ? 'bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-lg shadow-amber-900/40'
                       : 'bg-stone-800 text-stone-500 cursor-not-allowed'
                   }`}
                 >
-                  Summon Talisman (250 G)
+                  霊核を錬成する (250 両)
                 </button>
               </div>
 
-              {/* 装着中の護石 */}
-              <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Equipped Talisman</div>
+              <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">装着中の護石</div>
               {equippedTalisman ? (
-                <div className={`p-3 rounded-xl border bg-stone-950/80 ${RARITY_CONFIG[equippedTalisman.rarity].border}`}>
+                <div className={`p-3 rounded-xl border bg-stone-950/90 ${RARITY_CONFIG[equippedTalisman.rarity]?.border || 'border-stone-700'}`}>
                   <div className="flex justify-between items-center mb-1">
-                    <span className={`font-bold ${RARITY_CONFIG[equippedTalisman.rarity].color}`}>
+                    <span className={`font-bold ${RARITY_CONFIG[equippedTalisman.rarity]?.color || 'text-stone-300'}`}>
                       🔮 {equippedTalisman.name}
                     </span>
-                    <span className="text-[9px] font-bold text-purple-400">{equippedTalisman.rarity}</span>
+                    <span className="text-[9px] font-bold text-amber-400">{equippedTalisman.rarity}</span>
                   </div>
                   <div className="text-[11px] text-stone-300 mb-1">{equippedTalisman.skillDesc}</div>
                   <div className="text-[10px] font-mono text-stone-400">
-                    +{equippedTalisman.atkBonus} ATK • +{Math.round(equippedTalisman.critBonus * 100)}% CRIT
+                    +{equippedTalisman.atkBonus} 攻撃力 • +{Math.round(equippedTalisman.critBonus * 100)}% 会心率
                   </div>
                 </div>
               ) : (
                 <div className="p-3 rounded-xl border border-dashed border-stone-800 text-center text-stone-500">
-                  No Talisman equipped.
+                  護石は未装着です。
                 </div>
               )}
             </div>
@@ -238,7 +243,7 @@ export const GuildModal: React.FC<Props> = ({
 
           {tab === 'titles' && (
             <div className="space-y-2">
-              <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Earned Titles</div>
+              <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">獲得済みの武名</div>
               {titles.map(t => {
                 const isActive = activeTitleId === t.id;
                 return (
@@ -247,14 +252,14 @@ export const GuildModal: React.FC<Props> = ({
                     className={`p-2.5 rounded-xl border flex justify-between items-center ${
                       t.unlocked
                         ? isActive
-                          ? 'border-amber-500 bg-amber-950/30'
+                          ? 'border-amber-500 bg-amber-950/40'
                           : 'border-stone-800 bg-stone-950/60'
                         : 'border-stone-900 bg-stone-950/30 opacity-40'
                     }`}
                   >
                     <div>
                       <div className="font-bold text-stone-200">
-                        {t.name} {isActive && <span className="text-amber-400 text-[10px] font-mono">(Active)</span>}
+                        {t.name} {isActive && <span className="text-amber-400 text-[10px]">（名乗り中）</span>}
                       </div>
                       <div className="text-[10px] text-stone-400">{t.desc}</div>
                     </div>
@@ -263,7 +268,7 @@ export const GuildModal: React.FC<Props> = ({
                         onClick={() => onSelectTitle(t.id)}
                         className="px-2.5 py-1 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px] font-bold"
                       >
-                        Equip
+                        名乗る
                       </button>
                     )}
                   </div>
@@ -273,10 +278,9 @@ export const GuildModal: React.FC<Props> = ({
           )}
         </div>
 
-        {/* フッター */}
-        <div className="p-3 border-t border-stone-800 bg-stone-950/80 flex justify-between items-center text-xs font-mono">
-          <span className="text-stone-400">Delver Treasury:</span>
-          <span className="text-amber-400 font-bold">💰 {gold} G</span>
+        <div className="p-3 border-t border-stone-800 bg-stone-950 flex justify-between items-center text-xs font-mono">
+          <span className="text-stone-400">手持ち両目:</span>
+          <span className="text-amber-400 font-bold">💰 {gold} 両</span>
         </div>
       </div>
     </div>
